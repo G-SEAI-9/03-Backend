@@ -10,7 +10,6 @@ using System.Text;
 // long selten und BigInteger, wenn selbst long nicht reicht
 
 // * int - 4 Bytes / 32 Bit
-
 int count = 12;
 Console.WriteLine($"{default(int)}");
 Console.WriteLine($"{sizeof(int)}");
