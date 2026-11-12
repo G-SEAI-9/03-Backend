@@ -1,4 +1,4 @@
-// If..Else und Ternary
+// * If..Else und Ternary
 Console.Write("Wie alt bist du? ");
 int age;
 while (!int.TryParse(Console.ReadLine(), out age))
@@ -26,7 +26,7 @@ string ageGroup =
     : "erwachsen";
 Console.WriteLine($"Der Ternary sagt: {ageGroup}");
 
-// Switch
+// * Switch
 Console.Write("Gib eine Note ein (A, B, C, D, F): ");
 string? grade = Console.ReadLine();
 switch (grade)
@@ -51,7 +51,7 @@ switch (grade)
         break;
 }
 
-// While-Schleife
+// * While-Schleife
 int sum = 0;
 int number = 1;
 while (number <= 100)
@@ -61,7 +61,7 @@ while (number <= 100)
 }
 Console.WriteLine($"Summe von 1 bis 100: {sum}");
 
-// Do..While-Schleife
+// * Do..While-Schleife
 int secretNumber = 7;
 int guess;
 do
@@ -83,13 +83,13 @@ do
 } while (guess != secretNumber);
 Console.WriteLine("Richtig!");
 
-// For-Schleife
+// * For-Schleife
 for (int i = 1; i <= 10; i++)
 {
     Console.WriteLine($"{i} x 7 = {i * 7}");
 }
 
-// Break und Continue
+// * Break und Continue
 for (int i = 1; i <= 20; i++)
 {
     if (i % 2 == 0)
