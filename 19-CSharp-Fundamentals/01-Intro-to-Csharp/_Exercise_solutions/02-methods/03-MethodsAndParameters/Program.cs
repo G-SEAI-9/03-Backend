@@ -1,7 +1,9 @@
 // Namespaces und Dateistruktur
+using System.Globalization;
 using Utils;
 
 // Calculator-Grundlagen
+// Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Add(2, 3): {Calculator.Add(2, 3)}"));
 Console.WriteLine($"Add(2, 3): {Calculator.Add(2, 3)}");
 Console.WriteLine($"Multiply(3, 4): {Calculator.Multiply(3, 4)}");
 

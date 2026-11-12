@@ -20,17 +20,22 @@ else
 }
 
 // Ein Ternary wählt zwischen zwei Werten, deshalb braucht der dritte Fall einen zweiten Ternary im false-Zweig.
-string ageGroup =
-    age < 13 ? "Kind"
-    : age < 20 ? "Teenager"
-    : "erwachsen";
+string ageGroup = age < 13 ? "Kind" : (age < 20 ? "Teenager" : "erwachsen");
 Console.WriteLine($"Der Ternary sagt: {ageGroup}");
+
+string ageGroupS = age switch
+{
+    < 13 => "Kind",
+    < 20 => "Teenager",
+    _ => "erwachsen",
+};
 
 // * Switch
 Console.Write("Gib eine Note ein (A, B, C, D, F): ");
 string? grade = Console.ReadLine();
-switch (grade)
+switch (grade?.Trim().ToUpper())
 {
+    // case "a":
     case "A":
         Console.WriteLine("Excellent");
         break;
@@ -51,6 +56,13 @@ switch (grade)
         break;
 }
 
+// string message = grade switch
+// {
+//     "A" or "a" => "Execellent",
+//     "B" => "Good",
+//     // ...
+// };
+
 // * While-Schleife
 int sum = 0;
 int number = 1;
@@ -62,7 +74,8 @@ while (number <= 100)
 Console.WriteLine($"Summe von 1 bis 100: {sum}");
 
 // * Do..While-Schleife
-int secretNumber = 7;
+// int secretNumber = 7;
+int secretNumber = Random.Shared.Next(1, 11);
 int guess;
 do
 {

@@ -2,9 +2,9 @@ using System.Globalization;
 
 // * Pass by Value
 int number = 5;
-Console.WriteLine($"Vor Bump: {number}");
-ValueDemo.Bump(number);
-Console.WriteLine($"Nach Bump: {number}");
+Console.WriteLine($"Vor Bump: {number}"); // 5
+number = ValueDemo.Bump(number);
+Console.WriteLine($"Nach Bump: {number}"); // 6
 
 // * Pass by Reference mit ref
 int first = 1;
@@ -22,12 +22,12 @@ account.Balance = 100m;
 
 // var account = new Account { Balance = 100m };
 
-Console.WriteLine($"Vor Deposit: {account.Balance}");
+Console.WriteLine($"Vor Deposit: {account.Balance}"); // 100
 AccountOps.Deposit(account, 50m);
-Console.WriteLine($"Nach Deposit: {account.Balance}");
-Console.WriteLine($"Vor Reset: {account.Balance}");
+Console.WriteLine($"Nach Deposit: {account.Balance}"); // 150 <- geändert!
+Console.WriteLine($"Vor Reset: {account.Balance}"); // 150
 AccountOps.Reset(account);
-Console.WriteLine($"Nach Reset: {account.Balance}");
+Console.WriteLine($"Nach Reset: {account.Balance}"); // 150 <- nicht 0!
 
 // * Mehrere Ergebnisse mit out
 bool isValid = Parser.TryParsePrice("12.50", out decimal price);
@@ -48,10 +48,11 @@ Console.WriteLine($"Enthält 30: {RangeChecker.Contains(in comfortable, 30)}");
 
 public class ValueDemo
 {
-    public static void Bump(int number)
+    public static int Bump(int number)
     {
         number++;
-        Console.WriteLine($"In Bump: {number}");
+        Console.WriteLine($"In Bump: {number}"); // 6
+        return number;
     }
 }
 
@@ -75,7 +76,8 @@ public class AccountOps
 
     public static void Reset(Account account)
     {
-        account = new Account();
+        // account = new Account();
+        account.Balance = 0;
     }
 }
 
