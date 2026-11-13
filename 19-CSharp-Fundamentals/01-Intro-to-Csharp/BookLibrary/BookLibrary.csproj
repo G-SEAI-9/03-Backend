@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
+    <!-- <CheckForOverflowUnderflow> -->
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Meziantou.Analyzer" Version="3.0.339">
