@@ -3,7 +3,7 @@
 PlayerCharacter playerOne = new("abc", "Karl", 100, "wizard");
 var playerTwo = new PlayerCharacter("cde", "Hannah", 1200, "wizard");
 
-// var playerThree = new PlayerCharacter("xyz", "Test", 0, "wizard");
+// var playerThree = new PlayerCharacter("xyz", "Test", 0, "wizard"); // ERROR: ArgumentOutOfRangeException
 
 Console.WriteLine($"{playerOne.Health}");
 playerOne.TakeDamage(50);
@@ -82,15 +82,15 @@ class PlayerCharacter
         Console.WriteLine($"{Name} reached Level {Level}");
     }
 
-    // * static field
+    // * static field - call from the constructor
     public static int CharacterCreated = 0;
 
-    // * fields (state)
+    // * fields (state) of the objects
     private int _health = 100;
 
     private int _maxHealth;
 
-    // * property
+    // * properties of the objects
     public int MaxHealth
     {
         get => _maxHealth;
@@ -125,6 +125,8 @@ class PlayerCharacter
             }
         }
     }
+
+    // auto-properties (fields werden automatisch generiert)
     public string Name { get; set; }
     public string CharacterId { get; init; }
     public int Level { get; private set; }
@@ -149,7 +151,7 @@ class Monster
         Name = name;
     }
 
-    // auto-properties (fields werden automatisch generiert)
+    // auto-properties
     public string Id { get; init; }
 
     public string Name { get; set; }
