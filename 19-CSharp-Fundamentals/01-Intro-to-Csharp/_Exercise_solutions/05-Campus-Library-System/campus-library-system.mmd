@@ -1,0 +1,39 @@
+classDiagram
+    direction TB
+
+    class User {
+        -userID
+        -name
+        -email
+        +login()
+    }
+    class Student {
+        -studentID
+        +enrolInCourse()
+    }
+    class Professor {
+        -department
+        +assignGrade()
+    }
+    class Course {
+        -courseCode
+        -title
+    }
+    class Module
+    class Borrowable {
+        <<interface>>
+        +checkout()*
+        +returnItem()*
+    }
+    class Book {
+        -isbn
+        -author
+        +checkout()
+        +returnItem()
+    }
+
+    User <|-- Student
+    User <|-- Professor
+    Professor -- "1..*" Course : unterrichtet
+    Course "1" *-- "1..10" Module
+    Borrowable <|.. Book
