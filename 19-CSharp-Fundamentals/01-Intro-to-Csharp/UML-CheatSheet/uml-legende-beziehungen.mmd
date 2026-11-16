@@ -1,0 +1,27 @@
+classDiagram
+    direction TB
+
+    class Fahrzeug
+    class Auto
+    class IAusleihbar {
+        <<interface>>
+    }
+    class Buch
+    class Professor
+    class Kurs
+    class Bestellung
+    class Kunde
+    class Bibliothek
+    class Medium
+    class Haus
+    class Raum
+    class Program
+    class Console
+
+    Fahrzeug <|-- Auto : 1 Vererbung
+    IAusleihbar <|.. Buch : 2 Realisierung
+    Professor "1..*" -- "1..*" Kurs : 3 Assoziation
+    Bestellung "0..*" --> "1" Kunde : 4 gerichtete Assoziation
+    Bibliothek "0..1" o-- "0..*" Medium : 5 Aggregation
+    Haus "1" *-- "1..*" Raum : 6 Komposition
+    Program ..> Console : 7 Abhängigkeit

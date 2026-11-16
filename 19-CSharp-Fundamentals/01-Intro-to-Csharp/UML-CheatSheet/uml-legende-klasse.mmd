@@ -1,0 +1,18 @@
+classDiagram
+    direction LR
+
+    class IAusleihbar {
+        <<interface>>
+        +Ausleihen()* void
+    }
+    class Medium {
+        <<abstract>>
+        +Titel : string
+        -id : int
+        #erstelltAm : DateTime
+        ~intern : bool
+        +Anzahl : int$
+        +Medium(titel: string)
+        +Beschreiben()* string
+        +Finden(titel: string)$ Medium?
+    }
