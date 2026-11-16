@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <AnalysisLevelGlobalization>latest-none</AnalysisLevelGlobalization>
     <!-- <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow> -->
   </PropertyGroup>
 
