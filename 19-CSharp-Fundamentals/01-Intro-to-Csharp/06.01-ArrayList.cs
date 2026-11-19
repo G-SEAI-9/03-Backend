@@ -69,8 +69,6 @@
 //     Console.WriteLine($"{item}");
 // }
 
-using System.Drawing;
-
 Student firstStudent = new(1, "Karl", 3.2);
 Console.WriteLine(firstStudent);
 
