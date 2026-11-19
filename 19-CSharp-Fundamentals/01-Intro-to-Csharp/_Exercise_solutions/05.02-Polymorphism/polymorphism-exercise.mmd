@@ -1,0 +1,94 @@
+classDiagram
+    direction TB
+
+    %% Aufgabe 1: GameCharacter
+    class GameCharacter {
+        +Name : string
+        +Level : int
+        +GameCharacter(name: string, level: int)
+        +UseSpecial() void
+        +Describe() void
+    }
+    class Warrior {
+        +Warrior(name: string, level: int)
+        +UseSpecial() void
+        +Describe() void
+    }
+    class Mage {
+        +Mage(name: string, level: int)
+        +UseSpecial() void
+        +Describe() void
+    }
+    class Healer {
+        +Healer(name: string, level: int)
+        +UseSpecial() void
+        +Describe() void
+    }
+    class Rogue {
+        +Rogue(name: string, level: int)
+        +UseSpecial() void
+        +Describe() void
+    }
+    GameCharacter <|-- Warrior
+    GameCharacter <|-- Mage
+    GameCharacter <|-- Healer
+    GameCharacter <|-- Rogue
+    note for GameCharacter "UseSpecial und Describe#nbsp;#nbsp;#nbsp;<br>sind virtual#nbsp;#nbsp;#nbsp;"
+    note for Rogue "Describe mit new statt override:#nbsp;#nbsp;#nbsp;<br>Über eine GameCharacter-#nbsp;#nbsp;#nbsp;<br>Referenz läuft#nbsp;#nbsp;#nbsp;<br>GameCharacter.Describe#nbsp;#nbsp;#nbsp;"
+
+    %% Aufgabe 2: Exporter
+    class Exporter {
+        <<abstract>>
+        +FileName : string
+        #Exporter(fileName: string)
+        +Export(content: string)* void
+        #PrintStart(format: string) void
+    }
+    class PdfExporter {
+        +PdfExporter(fileName: string)
+        +Export(content: string) void
+    }
+    class CsvExporter {
+        +CsvExporter(fileName: string)
+        +Export(content: string) void
+    }
+    class HtmlExporter {
+        +HtmlExporter(fileName: string)
+        +Export(content: string) void
+    }
+    class MarkdownExporter {
+        +MarkdownExporter(fileName: string)
+        +Export(content: string) void
+    }
+    Exporter <|-- PdfExporter
+    Exporter <|-- CsvExporter
+    Exporter <|-- HtmlExporter
+    Exporter <|-- MarkdownExporter
+    note for Exporter "Export ist abstract:#nbsp;#nbsp;#nbsp;<br>kein Body, jede Kindklasse#nbsp;#nbsp;#nbsp;<br>muss override schreiben#nbsp;#nbsp;#nbsp;"
+
+    %% Aufgabe 3: AccessPass
+    class AccessPass {
+        +Holder : string
+        +AccessPass(holder: string)
+        +Validate() bool
+    }
+    class MetroPass {
+        +Zones : int
+        +MetroPass(holder: string, zones: int)
+        +Validate() bool
+    }
+    class BikeSharePass {
+        +RemainingMinutes : int
+        +BikeSharePass(holder: string, remainingMinutes: int)
+        +Validate() bool
+    }
+    class FerryPass {
+        +Expiry : DateOnly
+        +FerryPass(holder: string, expiry: DateOnly)
+        +Validate() bool
+    }
+    AccessPass <|-- MetroPass
+    AccessPass <|-- BikeSharePass
+    AccessPass <|-- FerryPass
+    note for AccessPass "Validate ist virtual#nbsp;#nbsp;#nbsp;"
+    note for FerryPass "sealed override:#nbsp;#nbsp;#nbsp;<br>Kindklassen dürfen Validate#nbsp;#nbsp;#nbsp;<br>nicht mehr überschreiben#nbsp;#nbsp;#nbsp;"

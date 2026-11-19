@@ -1,0 +1,64 @@
+classDiagram
+    direction TB
+
+    %% Aufgabe 1: Documents
+    class Document {
+        +Title : string
+        +Document(title: string)
+        +PrintInfo() void
+    }
+    class Report {
+        +Author : string
+        +Report(title: string, author: string)
+        +PrintInfo() void
+    }
+    class Invoice {
+        +Amount : decimal
+        +Invoice(title: string, amount: decimal)
+        +PrintInfo() void
+    }
+    Document <|-- Report
+    Document <|-- Invoice
+    note for Document "PrintInfo ist virtual#nbsp;#nbsp;#nbsp;"
+    note for Report "override mit#nbsp;#nbsp;#nbsp;<br>base.PrintInfo()#nbsp;#nbsp;#nbsp;"
+    note for Invoice "override: ersetzt#nbsp;#nbsp;#nbsp;<br>PrintInfo komplett#nbsp;#nbsp;#nbsp;"
+
+    %% Aufgabe 2: Shapes
+    class Shape {
+        +Draw() void
+    }
+    class Square {
+        +Draw() void
+    }
+    class Circle {
+        +Draw() void
+    }
+    Shape <|-- Square
+    Shape <|-- Circle
+    note for Shape "Draw ist virtual#nbsp;#nbsp;#nbsp;"
+    note for Square "override: läuft auch über#nbsp;#nbsp;#nbsp;<br>eine Shape-Referenz#nbsp;#nbsp;#nbsp;"
+    note for Circle "new: versteckt Shape.Draw nur.#nbsp;#nbsp;#nbsp;<br>Über eine Shape-Referenz#nbsp;#nbsp;#nbsp;<br>läuft Shape.Draw#nbsp;#nbsp;#nbsp;"
+
+    %% Aufgabe 3: Memberships
+    class Membership {
+        +MemberName : string
+        +Membership(memberName: string)
+        +GetBenefits() string
+    }
+    class StandardMembership {
+        +StandardMembership(memberName: string)
+        +GetBenefits() string
+    }
+    class PremiumMembership {
+        +PremiumMembership(memberName: string)
+        +GetBenefits() string
+    }
+    class LifetimeMembership {
+        +LifetimeMembership(memberName: string)
+        +GetBenefits() string
+    }
+    Membership <|-- StandardMembership
+    Membership <|-- PremiumMembership
+    Membership <|-- LifetimeMembership
+    note for Membership "GetBenefits ist virtual#nbsp;#nbsp;#nbsp;"
+    note for LifetimeMembership "sealed override:#nbsp;#nbsp;#nbsp;<br>Kindklassen dürfen GetBenefits#nbsp;#nbsp;#nbsp;<br>nicht mehr überschreiben#nbsp;#nbsp;#nbsp;"
