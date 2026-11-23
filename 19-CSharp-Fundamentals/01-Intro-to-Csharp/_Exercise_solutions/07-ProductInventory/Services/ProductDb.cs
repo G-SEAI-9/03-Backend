@@ -1,7 +1,7 @@
 using Models;
 using Services;
 
-namespace Servies;
+namespace Services;
 
 class ProductDb : IProductInventoryService
 {
