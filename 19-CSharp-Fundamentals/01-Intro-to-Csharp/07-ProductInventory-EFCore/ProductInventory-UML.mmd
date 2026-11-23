@@ -1,0 +1,103 @@
+classDiagram
+direction TB
+
+    class Program {
+        <<Top-Level Statements>>
+        service : IProductInventoryService
+        controller : ProductController
+        menu : Menu
+    }
+
+    namespace UI {
+        class Menu {
+            -ProductController _productController
+            +Menu(ProductController productController)
+            +Run() void
+            -ShowMenu() void
+        }
+    }
+
+    namespace Controllers {
+        class ProductController {
+            -IProductInventoryService _service
+            +ProductController(IProductInventoryService service)
+            +AddProduct() void
+            +AddMultipleProducts() void
+            +ListProduct() void
+            +GetById() void
+            +RemoveById() void
+            +FindByName() void
+        }
+    }
+
+    namespace Helpers {
+        class InputUtils {
+            +ReadNonEmpty(string prompt)$ string
+            +ReadInt(string prompt, int min, int max)$ int
+            +ReadDecimal(string prompt, decimal min, decimal max)$ decimal
+            +ReadId(string prompt)$ Guid
+        }
+    }
+
+    namespace Services {
+        class IProductInventoryService {
+            <<interface>>
+            +IReadOnlyCollection~Product~ Products «get»
+            +Add(Product product) void
+            +Add(IEnumerable~Product~ products) void
+            +Remove(Guid id) bool
+            +GetById(Guid id) Product?
+            +FindByName(string name) Product?
+        }
+
+        class ProductInventoryService {
+            -List~Product~ _products
+            +IReadOnlyCollection~Product~ Products «get»
+            +Add(Product product) void
+            +Add(IEnumerable~Product~ products) void
+            +Remove(Guid id) bool
+            +GetById(Guid id) Product?
+            +FindByName(string name) Product?
+        }
+
+        class ProductDb {
+            <<Skizze: wirft NotImplementedException>>
+            +IReadOnlyCollection~Product~ Products «get»
+            +Add(Product product) void
+            +Add(IEnumerable~Product~ products) void
+            +Remove(Guid id) bool
+            +GetById(Guid id) Product?
+            +FindByName(string name) Product?
+        }
+    }
+
+    namespace Models {
+        class Product {
+            +Guid Id «get»
+            +string Name «required»
+            +decimal Price «required»
+            +int Stock «required»
+        }
+    }
+
+    Program ..> Menu : erstellt, ruft Run() auf
+    Program ..> ProductController : erstellt
+    Program ..> ProductInventoryService : erstellt
+
+    Menu --> ProductController : _productController
+    ProductController --> IProductInventoryService : _service
+    ProductController ..> InputUtils : using static
+    ProductController ..> Product : erstellt
+
+    IProductInventoryService <|.. ProductInventoryService
+    IProductInventoryService <|.. ProductDb
+    ProductInventoryService "1" o-- "0..*" Product : _products
+
+    style Program fill:#f1f5f9,stroke:#64748b,color:#1e293b
+    style Menu fill:#dbeafe,stroke:#2563eb,color:#1e293b
+    style ProductController fill:#ede9fe,stroke:#7c3aed,color:#1e293b
+    style InputUtils fill:#f1f5f9,stroke:#64748b,color:#1e293b
+    style IProductInventoryService fill:#fef9c3,stroke:#ca8a04,color:#1e293b
+    style ProductInventoryService fill:#dcfce7,stroke:#16a34a,color:#1e293b
+    style ProductDb fill:#dcfce7,stroke:#16a34a,stroke-dasharray:5 5,color:#1e293b
+    style Product fill:#ffedd5,stroke:#ea580c,color:#1e293b
