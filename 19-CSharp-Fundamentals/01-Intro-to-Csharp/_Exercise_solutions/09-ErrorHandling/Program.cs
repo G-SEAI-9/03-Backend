@@ -1,3 +1,7 @@
+using Shop.Models;
+using Shop.Payments;
+using Shop.Services;
+
 var catalogue = new ProductCatalogue();
 var processor = new PaymentProcessor();
 
