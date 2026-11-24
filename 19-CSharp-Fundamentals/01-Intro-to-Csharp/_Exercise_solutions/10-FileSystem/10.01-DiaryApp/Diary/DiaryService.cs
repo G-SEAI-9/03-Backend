@@ -10,7 +10,7 @@ public class DiaryService
     {
         // wrap in try - catch to catch Exception (e.g. IOExeption)
 
-        // create dixectory if it does not exist
+        // create directory if it does not exist
 
         // optional: Clean up filename to avoid invalid chars
 
