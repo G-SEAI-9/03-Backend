@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
 using ContactBookApp.Models;
 
@@ -6,6 +8,7 @@ namespace ContactBookApp.Services;
 
 public class ContactService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private readonly string _filePath;
 
     public ContactService(string filePath)
@@ -17,7 +20,7 @@ public class ContactService
     {
         var contacts = LoadContacts();
         contacts.Add(contact);
-        SaveContacts(contacts);
+        SaveToFile(contacts);
         Console.WriteLine("Contact added.");
     }
 
@@ -56,7 +59,7 @@ public class ContactService
         var removed = contacts.RemoveAll(c =>
             c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
         );
-        SaveContacts(contacts);
+        SaveToFile(contacts);
 
         if (removed > 0)
             Console.WriteLine("Contact removed.");
@@ -66,22 +69,55 @@ public class ContactService
 
     private List<Contact> LoadContacts()
     {
-        // wrap in try catch block (IOException || JsonException)
-        {
-            // if file does not exist return empty List<Contact>
-            //
-            // read json from file
+        // * Ziel:
+        // Datei:    contacts.json  (liegt im Feld _filePath)
+        // Rückgabe: List<Contact> mit allen gespeicherten Kontakten
+        //           (oder leere Liste [], wenn die Datei noch nicht existiert)
 
-            // Deserialize content into List<Contact> and return or return empty List<Contact>
-            return new List<Contact>();
+        // JSON.parse(localStorage.geTItem(...)) ?? []
+        try
+        {
+            if (!File.Exists(_filePath))
+            {
+                return [];
+            }
+
+            string json = File.ReadAllText(_filePath);
+
+            return JsonSerializer.Deserialize<List<Contact>>(json) ?? [];
+        }
+        catch (Exception ex) when (ex is IOException || ex is JsonException)
+        {
+            Console.WriteLine($"Error loading contacts: {ex.Message}");
+            return [];
         }
     }
 
-    private void SaveContacts(List<Contact> contacts)
+    // LoadContacts: Datei → JSON-Text → List<Contact>   (ReadAllText, Deserialize)
+    // SaveContacts: List<Contact> → JSON-Text → Datei   (Serialize, WriteAllText)
+    private void SaveToFile(List<Contact> contacts)
     {
-        // wrap in try catch block (IOException || UnauthorizedAccessException)
-        //
-        // Serialize contact into json
-        // write to file
+        // * Ziel:
+        // Eingabe:  contacts = komplette Liste (z. B. nach AddContact mit karl)
+        // Datei:    contacts.json  (liegt im Feld _filePath)
+        // Inhalt:   [
+        //             {
+        //               "Name": "karl",
+        //               "Email": "karl@example.org",
+        //               "Phone": "22323-2342-3423"
+        //             }
+        //           ]
+
+        // localStorage.setItem("contacts", JSON.stringify(contacts))
+        try
+        {
+            string json = JsonSerializer.Serialize(contacts, JsonOptions);
+
+            File.WriteAllText(_filePath, json);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+        {
+            Console.WriteLine($"Error saving contacts: {ex.Message}");
+        }
     }
 }
