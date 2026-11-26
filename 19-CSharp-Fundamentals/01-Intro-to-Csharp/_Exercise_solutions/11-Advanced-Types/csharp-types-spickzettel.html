@@ -1,0 +1,1874 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Gespeichertes Theme vor dem ersten Paint anwenden (kein Aufblitzen)
+      const schemeMeta = document.querySelector('meta[name="color-scheme"]');
+      const schemeKey = 'csharp-spickzettel-scheme';
+
+      function savedScheme() {
+        try {
+          const value = localStorage.getItem(schemeKey);
+          return value === 'light' || value === 'dark' ? value : null;
+        } catch {
+          return null; // localStorage kann bei file:// blockiert sein
+        }
+      }
+
+      schemeMeta.content = savedScheme() ?? 'light dark';
+    </script>
+    <title>Advanced C# – Spickzettel</title>
+    <style>
+      /* Fallback (nur hell, ohne Toggle) für Browser ohne light-dark() */
+      :root {
+        --bg: #f4f6f9;
+        --surface: #ffffff;
+        --surface-subtle: #eceff4;
+        --surface-hover: #f7f9fc;
+        --border: #cfd6e1;
+        --border-strong: #9aa6b8;
+        --text: #131926;
+        --text-muted: #495467;
+        --code-bg: #edf1f7;
+        --stack-bg: #e2f3ee;
+        --stack-border: #89ccb9;
+        --stack-text: #0b5d4b;
+        --heap-bg: #e6eefc;
+        --heap-border: #9bb8ef;
+        --heap-text: #1d4499;
+        --yes: #0f6d3e;
+        --no: #a12639;
+        --warn: #854d06;
+        --focus: #1d4ed8;
+        --selection: #c8dcff;
+
+        --font-sans:
+          ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+          sans-serif;
+        --font-mono:
+          ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas,
+          monospace;
+        --radius: 10px;
+        --radius-sm: 6px;
+
+        color-scheme: light;
+        scrollbar-color: var(--border-strong) transparent;
+      }
+
+      @supports (color: light-dark(#000, #fff)) {
+        :root {
+          --bg: light-dark(#f4f6f9, #10141c);
+          --surface: light-dark(#ffffff, #171d28);
+          --surface-subtle: light-dark(#eceff4, #1f2736);
+          --surface-hover: light-dark(#f7f9fc, #1c2433);
+          --border: light-dark(#cfd6e1, #2c374b);
+          --border-strong: light-dark(#9aa6b8, #4c5c78);
+          --text: light-dark(#131926, #edf1f7);
+          --text-muted: light-dark(#495467, #9eaac0);
+          --code-bg: light-dark(#edf1f7, #232c3d);
+          --stack-bg: light-dark(#e2f3ee, #12312a);
+          --stack-border: light-dark(#89ccb9, #286a5c);
+          --stack-text: light-dark(#0b5d4b, #75e0c7);
+          --heap-bg: light-dark(#e6eefc, #162644);
+          --heap-border: light-dark(#9bb8ef, #335596);
+          --heap-text: light-dark(#1d4499, #9ac0ff);
+          --yes: light-dark(#0f6d3e, #63db9b);
+          --no: light-dark(#a12639, #f58c9b);
+          --warn: light-dark(#854d06, #f2bd66);
+          --focus: light-dark(#1d4ed8, #7eb0ff);
+          --selection: light-dark(#c8dcff, #284b85);
+
+          color-scheme: light dark;
+        }
+
+        /* Der Toggle schreibt "light" oder "dark" ins Meta-Tag */
+        :root:has(meta[name='color-scheme'][content='light']) {
+          color-scheme: light;
+        }
+        :root:has(meta[name='color-scheme'][content='dark']) {
+          color-scheme: dark;
+        }
+      }
+
+      @supports not (color: light-dark(#000, #fff)) {
+        .theme-toggle {
+          display: none;
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      ::selection {
+        background: var(--selection);
+        color: var(--text);
+      }
+
+      html {
+        font-family: var(--font-sans);
+        line-height: 1.5;
+        color: var(--text);
+        background: var(--bg);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body {
+        margin: 0;
+        padding: clamp(1.25rem, 3vw, 2.5rem) clamp(0.875rem, 2.5vw, 2rem) 3rem;
+        font-size: 0.9375rem;
+      }
+
+      .page {
+        max-inline-size: 1120px;
+        margin-inline: auto;
+      }
+
+      .sprite {
+        position: absolute;
+        inline-size: 0;
+        block-size: 0;
+      }
+
+      .icon {
+        inline-size: 1.1em;
+        block-size: 1.1em;
+        flex: none;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      :focus-visible {
+        outline: 2.5px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      p {
+        margin: 0;
+      }
+
+      code,
+      pre {
+        font-family: var(--font-mono);
+        font-variant-ligatures: none;
+      }
+
+      code {
+        font-size: 0.88em;
+        background: var(--code-bg);
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+
+      /* Kopf */
+      .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-block-end: 1.5rem;
+      }
+
+      h1 {
+        font-size: clamp(1.625rem, 1.2rem + 1.8vw, 2rem);
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+      }
+
+      .lead {
+        margin-block-start: 0.4rem;
+        font-size: 1rem;
+        color: var(--text-muted);
+        text-wrap: pretty;
+      }
+
+      .theme-toggle {
+        display: inline-grid;
+        place-items: center;
+        flex: none;
+        inline-size: 2.5rem;
+        block-size: 2.5rem;
+        padding: 0;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      .theme-toggle:hover {
+        background: var(--surface-subtle);
+      }
+
+      .theme-toggle:active {
+        transform: translateY(1px);
+      }
+
+      /* Beide Icons liegen übereinander; light-dark() blendet das unpassende aus */
+      .theme-toggle .icon {
+        grid-area: 1 / 1;
+      }
+
+      .icon-moon {
+        color: light-dark(var(--text), transparent);
+      }
+      .icon-sun {
+        color: light-dark(transparent, var(--text));
+      }
+
+      /* Tabs */
+      .tablist {
+        display: flex;
+        gap: 0.25rem;
+        overflow-x: auto;
+        scroll-snap-type: inline proximity;
+        border-block-end: 1px solid var(--border);
+        margin-block-end: 1.75rem;
+      }
+
+      [role='tab'] {
+        position: relative;
+        flex: none;
+        scroll-snap-align: start;
+        min-block-size: 2.75rem;
+        padding: 0.55rem 1rem 0.7rem;
+        border: 0;
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        background: transparent;
+        color: var(--text-muted);
+        font: inherit;
+        font-size: 0.95rem;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      [role='tab']:hover {
+        color: var(--text);
+        background: var(--surface-subtle);
+      }
+
+      [role='tab'][aria-selected='true'] {
+        color: var(--text);
+      }
+
+      [role='tab'][aria-selected='true']::after {
+        content: '';
+        position: absolute;
+        inset: auto 0 0;
+        border-block-end: 3px solid var(--focus);
+      }
+
+      /* Abschnitte (Wrapper im Tabpanel, damit hidden="until-found" keine leeren Ränder zeigt) */
+      .tab-content > section + section {
+        margin-block-start: 2.25rem;
+      }
+
+      h2 {
+        margin-block-end: 0.75rem;
+        font-size: 1.25rem;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+      }
+
+      h2 code {
+        background: none;
+        padding: 0;
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+      }
+
+      .note {
+        display: block;
+        margin-block-start: 0.15em;
+        font-size: 0.85em;
+        font-weight: 400;
+        color: var(--text-muted);
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 0.05em 0.6em;
+        border: 1px solid var(--stack-border);
+        border-radius: 999px;
+        background: var(--stack-bg);
+        color: var(--stack-text);
+        font-size: 0.85em;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .tag.heap {
+        border-color: var(--heap-border);
+        background: var(--heap-bg);
+        color: var(--heap-text);
+      }
+
+      /* Vergleichstabellen */
+      .compare-section {
+        container-type: inline-size;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        --pad-x: 0.75rem;
+        inline-size: 100%;
+        border-spacing: 0;
+        overflow: hidden; /* Kopfzeile folgt den runden Ecken */
+      }
+
+      th,
+      td {
+        padding: 0.8em var(--pad-x);
+        text-align: start;
+        vertical-align: baseline;
+      }
+
+      thead th {
+        background: var(--surface-subtle);
+        color: var(--text-muted);
+        font-size: 0.85em;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      thead code {
+        background: none;
+        padding: 0;
+        font-size: 1em;
+        color: var(--text);
+      }
+
+      tbody :is(th, td) {
+        border-block-start: 1px solid var(--border);
+      }
+
+      tbody tr:hover {
+        background: var(--surface-hover);
+      }
+
+      tbody th {
+        font-weight: 400;
+      }
+
+      .use {
+        text-wrap: balance;
+      }
+
+      .type-name {
+        display: block;
+        background: none;
+        padding: 0;
+        font-size: 0.95em;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      td .note {
+        white-space: nowrap;
+      }
+
+      .status {
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .status .icon {
+        margin-inline-end: 0.35em;
+        vertical-align: -0.2em;
+      }
+
+      .yes .icon {
+        color: var(--yes);
+      }
+      .no .icon {
+        color: var(--no);
+      }
+      .warn .icon {
+        color: var(--warn);
+      }
+
+      .na {
+        color: var(--text-muted);
+        text-decoration: none;
+      }
+
+      /* Split-Screen neben dem Editor: gleiche Tabelle, nur dichter */
+      @container (width < 960px) {
+        table {
+          --pad-x: 0.45rem;
+          font-size: 0.8125rem;
+        }
+
+        .type-name,
+        .events-table td code {
+          white-space: normal;
+        }
+      }
+
+      /* Schmal: jede Zeile wird zur Karte, die Spaltenköpfe wandern als Label vor die Werte */
+      @container (width < 700px) {
+        .table-wrap,
+        table {
+          overflow: visible;
+        }
+
+        table.panel {
+          background: none;
+          border: 0;
+        }
+
+        table,
+        tbody,
+        tr,
+        th,
+        td {
+          display: block;
+        }
+
+        thead {
+          display: none;
+        }
+
+        table {
+          font-size: 0.875rem;
+        }
+
+        tbody th,
+        tbody .use {
+          border: 0;
+        }
+
+        tbody tr {
+          padding: 0.85rem 1rem 0.45rem;
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+        }
+
+        tbody tr + tr {
+          margin-block-start: 0.75rem;
+        }
+
+        th,
+        td {
+          padding: 0;
+        }
+
+        .type-name {
+          font-size: 1em;
+        }
+
+        .use {
+          padding-block: 0.3rem 0.75rem;
+        }
+
+        td:not(.use) {
+          display: grid;
+          grid-template-columns: 7.25rem auto minmax(0, 1fr);
+          column-gap: 0.6rem;
+          align-items: baseline;
+          padding-block: 0.4rem;
+          border-block-start: 1px solid var(--border);
+        }
+
+        td:not(.use)::before {
+          font-size: 0.85em;
+          color: var(--text-muted);
+        }
+
+        .types-table td:nth-child(3)::before {
+          content: 'Speicher';
+        }
+        .types-table td:nth-child(4)::before {
+          content: 'Unveränderbar';
+        }
+        .types-table td:nth-child(5)::before {
+          content: '== vergleicht';
+        }
+        .types-table td:nth-child(6)::before {
+          content: 'with';
+          font-family: var(--font-mono);
+        }
+        .types-table td:nth-child(7)::before {
+          content: 'ToString()';
+          font-family: var(--font-mono);
+        }
+
+        .delegates-table td:nth-child(3)::before {
+          content: 'Rückgabe';
+        }
+        .delegates-table td:nth-child(4)::before {
+          content: 'Eingaben';
+        }
+        .delegates-table td:nth-child(5)::before {
+          content: 'Im Alltag';
+        }
+
+        .events-table td:not(.use) {
+          grid-template-columns: 4.5rem auto minmax(0, 1fr);
+        }
+
+        .events-table td:nth-child(3) {
+          grid-template-columns: 4.5rem minmax(0, 1fr);
+        }
+
+        .events-table td:nth-child(3)::before {
+          content: 'Syntax';
+        }
+        .events-table td:nth-child(4)::before {
+          content: 'Regel';
+        }
+
+        .events-table td:nth-child(3) .note {
+          grid-column: 2;
+          margin-block-start: 0.25rem;
+          white-space: normal;
+        }
+
+        .events-table td code {
+          white-space: normal;
+          overflow-wrap: anywhere;
+        }
+
+        td .note {
+          margin: 0;
+        }
+      }
+
+      /* Zweispaltige Referenz-Panels */
+      .split {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2.25rem 1.25rem;
+      }
+
+      .split > div {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .split .panel {
+        flex: 1;
+      }
+
+      @media (max-width: 700px) {
+        .split {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      .rows {
+        margin: 0;
+        padding: 0.5rem 1.25rem;
+        list-style: none;
+      }
+
+      .rows > * {
+        padding-block: 0.7rem;
+      }
+
+      .rows > * + * {
+        border-block-start: 1px solid var(--border);
+      }
+
+      .term {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem 0.5rem;
+        margin-block-end: 0.3rem;
+        font-weight: 600;
+      }
+
+      .term code {
+        font-weight: 700;
+      }
+
+      dd {
+        margin: 0;
+      }
+
+      .sig-examples {
+        margin: 0.45rem 0 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+      }
+
+      .sig-examples code {
+        color: var(--text);
+      }
+
+      .steps {
+        counter-reset: step;
+      }
+
+      .steps li {
+        counter-increment: step;
+        display: grid;
+        grid-template-columns: 1.6rem minmax(0, 1fr);
+        gap: 0.75rem;
+      }
+
+      .steps li::before {
+        content: counter(step);
+        display: grid;
+        place-items: center;
+        block-size: 1.6rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 50%;
+        background: var(--surface-subtle);
+        font-size: 0.85em;
+        font-weight: 700;
+      }
+
+      .steps li.recommended::before {
+        border-color: var(--stack-border);
+        background: var(--stack-bg);
+        color: var(--stack-text);
+      }
+
+      /* Begriffe: Frage links, die beiden Seiten nebeneinander */
+      .concept {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) repeat(2, minmax(0, 1.4fr));
+        gap: 0.9rem 1.5rem;
+        padding: 1.1rem 1.25rem;
+      }
+
+      .concept + .concept {
+        border-block-start: 1px solid var(--border);
+      }
+
+      h3 {
+        font-size: 1em;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        min-inline-size: 0;
+      }
+
+      h4 {
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        font-size: 1em;
+      }
+
+      h3 code,
+      h4 code {
+        background: none;
+        padding: 0;
+      }
+
+      .side.stack h4 {
+        color: var(--stack-text);
+      }
+      .side.heap h4 {
+        color: var(--heap-text);
+      }
+
+      .side p {
+        margin-block: 0.25rem 0.65rem;
+      }
+
+      pre {
+        margin: auto 0 0; /* Code-Blöcke beider Seiten schließen unten bündig ab */
+        padding: 0.6rem 0.75rem;
+        border-radius: var(--radius-sm);
+        background: var(--surface-subtle);
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      pre code {
+        background: none;
+        padding: 0;
+        font-size: 1em;
+        white-space: inherit;
+      }
+
+      .comment {
+        color: var(--text-muted);
+      }
+
+      @media (max-width: 900px) {
+        .concept {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .concept-head {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .concept {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      /* Faustregel */
+      .rule {
+        margin-block-start: 2.25rem;
+        padding: 0.9rem 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-subtle);
+        text-wrap: pretty;
+      }
+
+      @media (forced-colors: active) {
+        [role='tab'][aria-selected='true']::after {
+          border-block-end-color: Highlight;
+        }
+      }
+
+      @media print {
+        :root {
+          color-scheme: light !important;
+        }
+
+        body {
+          padding: 0;
+        }
+
+        .theme-toggle,
+        .tablist {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="sprite" aria-hidden="true">
+      <symbol id="i-check" viewBox="0 0 20 20"><path d="M4.5 10.5 8.2 14.2 15.8 6.2" /></symbol>
+      <symbol id="i-cross" viewBox="0 0 20 20">
+        <path d="M5.5 5.5 14.5 14.5M14.5 5.5 5.5 14.5" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 20 20">
+        <circle cx="10" cy="10" r="7.5" />
+        <path d="M10 9.2v4.3M10 6.5h.01" />
+      </symbol>
+      <symbol id="i-layers" viewBox="0 0 20 20">
+        <path d="m10 3.2 7 3.8-7 3.8-7-3.8 7-3.8Z" />
+        <path d="m3 10.8 7 3.8 7-3.8" />
+        <path d="m3 14.2 7 3.8 7-3.8" />
+      </symbol>
+      <symbol id="i-link" viewBox="0 0 20 20">
+        <path d="M8.5 11.5a3.5 3.5 0 0 0 5 0l2.2-2.2a3.5 3.5 0 0 0-5-5L9.5 5.5" />
+        <path d="M11.5 8.5a3.5 3.5 0 0 0-5 0L4.3 10.7a3.5 3.5 0 0 0 5 5l1.2-1.2" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 20 20">
+        <circle cx="10" cy="10" r="3.5" />
+        <path
+          d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4"
+        />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 20 20">
+        <path d="M16.2 12.6A6.8 6.8 0 0 1 7.4 3.8a6.8 6.8 0 1 0 8.8 8.8Z" />
+      </symbol>
+    </svg>
+
+    <div class="page">
+      <header class="page-header">
+        <div>
+          <h1>Advanced C#&nbsp;– Spickzettel</h1>
+          <p class="lead">
+            Kompakte Übersicht zum Nachschlagen: <strong>Datentypen</strong>,
+            <strong>Delegates</strong> und <strong>Events</strong> auf einen Blick.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="theme-toggle"
+          id="theme-toggle"
+          aria-label="Zwischen hellem und dunklem Design wechseln"
+          title="Hell/Dunkel wechseln"
+        >
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon" /></svg>
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun" /></svg>
+        </button>
+      </header>
+
+      <main>
+        <div
+          class="tablist"
+          role="tablist"
+          focusgroup="tablist nomemory"
+          aria-label="Spickzettel-Themen"
+        >
+          <button
+            type="button"
+            role="tab"
+            id="tab-types"
+            aria-selected="true"
+            tabindex="0"
+            focusgroupstart
+          >
+            Datentypen
+          </button>
+          <button type="button" role="tab" id="tab-delegates" aria-selected="false" tabindex="-1">
+            Delegates, Func &amp; Action
+          </button>
+          <button type="button" role="tab" id="tab-events" aria-selected="false" tabindex="-1">
+            Events
+          </button>
+        </div>
+
+        <!-- TAB 1: DATENTYPEN -->
+        <div role="tabpanel" id="panel-types" aria-labelledby="tab-types">
+          <div class="tab-content">
+            <section class="compare-section" aria-labelledby="sec-types">
+              <h2 id="sec-types">Die 5 Typen im Vergleich</h2>
+              <div class="table-wrap">
+                <table class="panel types-table">
+                  <caption class="visually-hidden">
+                    Vergleich der fünf C#-Typen enum, readonly record struct, record, class und
+                    interface
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Typ</th>
+                      <th scope="col">Wofür?</th>
+                      <th scope="col">Speicher</th>
+                      <th scope="col">Unveränderbar</th>
+                      <th scope="col"><code>==</code> vergleicht</th>
+                      <th scope="col"><code>with</code></th>
+                      <th scope="col"><code>ToString()</code></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row"><code class="type-name">enum</code></th>
+                      <td class="use">Feste Auswahl (Status, Rolle, Richtung)</td>
+                      <td>
+                        <span class="tag">Stack</span>
+                        <span class="note">Value Type</span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Ja</span
+                        >
+                        <span class="note">feste Konstanten</span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Werte</span
+                        >
+                        <span class="note">Value Equality</span>
+                      </td>
+                      <td><abbr class="na" title="entfällt">—</abbr></td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Lesbar</span
+                        >
+                        <span class="note">Member-Name</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row"><code class="type-name">readonly record struct</code></th>
+                      <td class="use">Winziger, fester Wert (2–&#8288;3&nbsp;Felder)</td>
+                      <td>
+                        <span class="tag">Stack</span>
+                        <span class="note">Value Type</span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Ja</span
+                        >
+                        <span class="note">durch <code>readonly</code></span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Werte</span
+                        >
+                        <span class="note">Value Equality</span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Ja</span
+                        >
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Lesbar</span
+                        >
+                        <span class="note">alle Properties</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">record</code>
+                        <span class="note">= <code>record class</code></span>
+                      </th>
+                      <td class="use">Reine Daten / DTOs (mehr Felder)</td>
+                      <td>
+                        <span class="tag heap">Heap</span>
+                        <span class="note">Reference Type</span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Ja</span
+                        >
+                        <span class="note">standardmäßig</span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Werte</span
+                        >
+                        <span class="note">Value Equality</span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Ja</span
+                        >
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Lesbar</span
+                        >
+                        <span class="note">alle Properties</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row"><code class="type-name">class</code></th>
+                      <td class="use">Lebendiges Objekt mit State &amp; Logik</td>
+                      <td>
+                        <span class="tag heap">Heap</span>
+                        <span class="note">Reference Type</span>
+                      </td>
+                      <td>
+                        <span class="status no"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-cross" /></svg
+                          >Nein</span
+                        >
+                      </td>
+                      <td>
+                        <span class="status warn"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-info" /></svg
+                          >Adresse</span
+                        >
+                        <span class="note">Reference Equality</span>
+                      </td>
+                      <td>
+                        <span class="status no"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-cross" /></svg
+                          >Nein</span
+                        >
+                      </td>
+                      <td>
+                        <span class="status no"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-cross" /></svg
+                          >Typname</span
+                        >
+                        <span class="note">ohne Werte</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">interface</code>
+                        <span class="note">Name beginnt mit <code>I</code></span>
+                      </th>
+                      <td class="use">
+                        Vertrag: legt fest, <strong>was</strong> da sein muss – nicht
+                        <strong>wie</strong>
+                      </td>
+                      <td>
+                        <abbr class="na" title="entfällt">—</abbr>
+                        <span class="note">kein eigenes Objekt</span>
+                      </td>
+                      <td><abbr class="na" title="entfällt">—</abbr></td>
+                      <td><abbr class="na" title="entfällt">—</abbr></td>
+                      <td><abbr class="na" title="entfällt">—</abbr></td>
+                      <td><abbr class="na" title="entfällt">—</abbr></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="split" aria-label="Keywords und Struct-Stufen">
+              <div>
+                <h2>Was macht welches Keyword?</h2>
+                <dl class="rows panel">
+                  <div>
+                    <dt class="term"><code>struct</code> vs. <code>class</code></dt>
+                    <dd>
+                      Legt den <strong>Speicherort</strong> fest: Value Type (Stack, Kopie) oder
+                      Reference Type (Heap, Adresse).
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term"><code>record</code></dt>
+                    <dd>
+                      <strong>Komfortpaket vom Compiler:</strong> Kurzsyntax, Werte-<code>==</code>,
+                      <code>with</code>-Kopie und lesbares <code>ToString()</code>.
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term"><code>readonly</code></dt>
+                    <dd>
+                      <strong>Sperrt alle Felder</strong> – der Wert ist unveränderbar. Ein
+                      <code>record</code> ist das schon standardmäßig, ein
+                      <code>record struct</code> erst mit <code>readonly</code> davor.
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div>
+                <h2>Die 3 Stufen bei <code>struct</code></h2>
+                <ol class="rows steps panel">
+                  <li>
+                    <div>
+                      <div class="term"><code>struct</code></div>
+                      <p>
+                        Value Type (Stack), veränderbar, <strong>kein <code>==</code></strong> – nur
+                        <code>.Equals()</code>.
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <div>
+                      <div class="term"><code>record struct</code></div>
+                      <p>
+                        Dazu: Kurzsyntax, Werte-<code>==</code>, <code>with</code> und lesbares
+                        <code>ToString()</code> – aber noch veränderbar.
+                      </p>
+                    </div>
+                  </li>
+                  <li class="recommended">
+                    <div>
+                      <div class="term">
+                        <code>readonly record struct</code>
+                        <span class="tag">Standard für kleine Werte</span>
+                      </div>
+                      <p>Dazu: unveränderbar – <code>readonly</code> sperrt alle Felder.</p>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+            </section>
+
+            <section aria-labelledby="sec-concepts">
+              <h2 id="sec-concepts">3 Begriffe kurz erklärt</h2>
+              <div class="panel">
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3>Stack vs. Heap</h3>
+                    <p class="note">Was passiert bei <code>var b = a;</code>?</p>
+                  </div>
+                  <div class="side stack">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-layers" /></svg>Stack
+                      (Value Type)
+                    </h4>
+                    <p>
+                      Der Wert liegt direkt in der Variable. <code>b = a</code> macht eine
+                      <strong>echte Kopie</strong>.
+                    </p>
+                    <pre><code>var b = a;
+<span class="comment">// a und b sind unabhängig</span></code></pre>
+                  </div>
+                  <div class="side heap">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-link" /></svg>Heap
+                      (Reference Type)
+                    </h4>
+                    <p>
+                      Das Objekt liegt im Heap, die Variable hält nur die <strong>Adresse</strong>.
+                      <code>b = a</code> teilt dasselbe Objekt.
+                    </p>
+                    <pre><code>var b = a; b.Add(item);
+<span class="comment">// ändert auch a</span></code></pre>
+                  </div>
+                </div>
+
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3>Vergleich mit <code>==</code></h3>
+                    <p class="note">Werte oder Speicheradresse?</p>
+                  </div>
+                  <div class="side yes">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Werte-<code
+                        >==</code
+                      >
+                      (Value Equality)
+                    </h4>
+                    <p>
+                      Vergleicht den <strong>Inhalt</strong>, also die Felder (<code>record</code>,
+                      <code>record struct</code>).
+                    </p>
+                    <pre><code>new Point(1, 2) == new Point(1, 2)
+<span class="comment">// → true (gleicher Inhalt)</span></code></pre>
+                  </div>
+                  <div class="side warn">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>Adress-<code
+                        >==</code
+                      >
+                      (Reference Equality)
+                    </h4>
+                    <p>
+                      Prüft nur, ob beide auf <strong>dasselbe Objekt</strong> zeigen
+                      (<code>class</code>).
+                    </p>
+                    <pre><code>new User("Ada") == new User("Ada")
+<span class="comment">// → false (zwei getrennte Objekte)</span></code></pre>
+                  </div>
+                </div>
+
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3>Lesbares <code>ToString()</code></h3>
+                    <p class="note">Was gibt <code>Console.WriteLine(x)</code> aus?</p>
+                  </div>
+                  <div class="side yes">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Mit
+                      <code>record</code> oder <code>override</code>
+                    </h4>
+                    <p>
+                      Der Compiler gibt alle Properties lesbar aus. Per
+                      <code>override ToString()</code> frei anpassbar.
+                    </p>
+                    <pre><code>Point { X = 1, Y = 2 }
+<span class="comment">// alle Properties mit Wert</span></code></pre>
+                  </div>
+                  <div class="side no">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-cross" /></svg>Normale
+                      <code>class</code> / <code>struct</code>
+                    </h4>
+                    <p>
+                      Das Standard-<code>ToString()</code> von <code>object</code> gibt nur den
+                      <strong>Typnamen</strong> aus – ohne Werte.
+                    </p>
+                    <pre><code>MyApp.Models.User
+<span class="comment">// nur Namespace + Typname</span></code></pre>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="rule">
+              <p>
+                <strong>Faustregel:</strong> Im Zweifel mit <code>class</code> (State &amp; Logik)
+                oder <code>record</code> (reine Daten) anfangen.
+                <code>readonly record struct</code> nur für winzige, unveränderbare Werte
+                (2–&#8288;3&nbsp;Felder).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: DELEGATES -->
+        <div
+          role="tabpanel"
+          id="panel-delegates"
+          aria-labelledby="tab-delegates"
+          hidden="until-found"
+        >
+          <div class="tab-content">
+            <section class="compare-section" aria-labelledby="sec-delegates">
+              <h2 id="sec-delegates">Delegates im Vergleich</h2>
+              <div class="table-wrap">
+                <table class="panel delegates-table">
+                  <caption class="visually-hidden">
+                    Vergleich der Delegate-Typen Func, Action und eigenem delegate in C#
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Typ</th>
+                      <th scope="col">Wofür?</th>
+                      <th scope="col">Rückgabe</th>
+                      <th scope="col">Eingaben</th>
+                      <th scope="col">Im Alltag</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">Func&lt;..., TResult&gt;</code>
+                        <span class="note">letzter Typ = Rückgabe</span>
+                      </th>
+                      <td class="use">Berechnen, Umwandeln, Filtern</td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                          >Ja</span
+                        >
+                        <span class="note">immer letzter Typ</span>
+                      </td>
+                      <td>
+                        0–&#8288;16 Parameter
+                        <span class="note">alle Typen davor</span>
+                      </td>
+                      <td>
+                        <span class="tag">Standard</span>
+                        <span class="note">mit Rückgabe</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">Action&lt;...&gt;</code>
+                        <span class="note">kein Rückgabetyp</span>
+                      </th>
+                      <td class="use">Ausführen, Loggen, Speichern</td>
+                      <td>
+                        <span class="status no"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-cross" /></svg
+                          >Nein</span
+                        >
+                        <span class="note">immer <code>void</code></span>
+                      </td>
+                      <td>
+                        0–&#8288;16 Parameter
+                        <span class="note">alle angegebenen Typen</span>
+                      </td>
+                      <td>
+                        <span class="tag heap">Standard</span>
+                        <span class="note">ohne Rückgabe</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">delegate</code>
+                        <span class="note">eigener Typ</span>
+                      </th>
+                      <td class="use">Feste Methodensignatur mit eigenem Namen</td>
+                      <td>
+                        <span class="status warn"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-info" /></svg
+                          >Frei</span
+                        >
+                        <span class="note">selbst festgelegt</span>
+                      </td>
+                      <td>
+                        beliebig
+                        <span class="note">mit Parameternamen</span>
+                      </td>
+                      <td>
+                        <abbr class="na" title="selten selbst definiert">Selten</abbr>
+                        <span class="note">Grundlage von Func/Action</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="split" aria-label="Signatur lesen und Übergabearten">
+              <div>
+                <h2>Wie liest man <code>Func</code> &amp; <code>Action</code>?</h2>
+                <dl class="rows panel">
+                  <div>
+                    <dt class="term"><code>Func&lt;Eingabe..., Rückgabe&gt;</code></dt>
+                    <dd>
+                      Alle Typen <strong>vorne</strong> sind Eingaben, der
+                      <strong>letzte Typ</strong> ist immer der Rückgabewert.
+                      <ul class="sig-examples">
+                        <li>
+                          <code>Func&lt;string, int&gt;</code> → <code>string</code> rein,
+                          <code>int</code> raus
+                        </li>
+                        <li><code>Func&lt;decimal, decimal&gt;</code> → Zahl rein, Zahl raus</li>
+                        <li>
+                          <code>Func&lt;T, bool&gt;</code> →
+                          <strong>Predicate</strong> (Ja/Nein-Filter)
+                        </li>
+                      </ul>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term"><code>Action&lt;Eingabe...&gt;</code></dt>
+                    <dd>
+                      Alle Typen sind <strong>Eingaben</strong>, zurück kommt nichts
+                      (<code>void</code>).
+                      <ul class="sig-examples">
+                        <li><code>Action</code> → nichts rein, nichts raus</li>
+                        <li>
+                          <code>Action&lt;string&gt;</code> → <code>string</code> rein,
+                          <code>void</code>
+                        </li>
+                      </ul>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term">Brücke aus JavaScript / TypeScript</dt>
+                    <dd>
+                      Dieselbe Idee wie Callbacks in <code>.filter()</code>,
+                      <code>.map()</code> oder <code>onClick</code> – nur vom Compiler typgeprüft:
+                      <code>Func&lt;int, bool&gt;</code> entspricht
+                      <code>(n: number) =&gt; boolean</code>.
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div>
+                <h2>Wie übergebe ich eine Methode?</h2>
+                <dl class="rows panel">
+                  <div>
+                    <dt class="term">
+                      Lambda
+                      <code>x =&gt; ...</code>
+                      <span class="tag">kurze Regel</span>
+                    </dt>
+                    <dd>
+                      Anonyme Methode direkt an der Stelle (wie Arrow Functions in JS). Lässt sich
+                      auch in einer Variable speichern und wiederverwenden.
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term">
+                      Method Group
+                      <code>Name</code>
+                      <span class="tag heap">ohne ()</span>
+                    </dt>
+                    <dd>
+                      Gibt es schon eine passende Methode, reicht ihr Name – ohne Lambda-Hülle
+                      drumherum (<code>Console.WriteLine</code>, <code>list.Add</code>).
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term">Warum das überhaupt?</dt>
+                    <dd>
+                      Eine Methode oder Klasse muss nicht alles fest einbauen – das konkrete
+                      Verhalten (Filter, Preisregel, Logger) kommt erst beim Aufruf von außen rein.
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
+
+            <section aria-labelledby="sec-delegate-concepts">
+              <h2 id="sec-delegate-concepts">3 Unterschiede kurz erklärt</h2>
+              <div class="panel">
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3><code>Func</code> vs. <code>Action</code></h3>
+                    <p class="note">Kommt ein Wert zurück?</p>
+                  </div>
+                  <div class="side stack">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg
+                      ><code>Func</code> (mit Rückgabe)
+                    </h4>
+                    <p>Berechnet oder prüft etwas und gibt ein <strong>Ergebnis</strong> zurück.</p>
+                    <pre><code>Func&lt;decimal, decimal&gt; discount = p =&gt; p * 0.9m;
+<span class="comment">// decimal rein → decimal raus</span></code></pre>
+                  </div>
+                  <div class="side heap">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg
+                      ><code>Action</code> (ohne Rückgabe)
+                    </h4>
+                    <p>
+                      Führt eine Aktion aus (Loggen, Speichern) und gibt
+                      <strong>nichts</strong> (<code>void</code>) zurück.
+                    </p>
+                    <pre><code>Action&lt;string&gt; log = msg =&gt; Console.WriteLine(msg);
+<span class="comment">// string rein → void</span></code></pre>
+                  </div>
+                </div>
+
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3>Lambda vs. Method Group</h3>
+                    <p class="note">Neu schreiben oder bestehende nutzen?</p>
+                  </div>
+                  <div class="side yes">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Lambda
+                    </h4>
+                    <p>
+                      Kurze Regel direkt vor Ort schreiben – Typen leitet der Compiler automatisch
+                      her.
+                    </p>
+                    <pre><code>Func&lt;int, bool&gt; isPositive = n =&gt; n &gt; 0;
+<span class="comment">// kurz, anonym, direkt lesbar</span></code></pre>
+                  </div>
+                  <div class="side heap">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-link" /></svg>Method Group
+                    </h4>
+                    <p>Passt eine vorhandene Methode exakt zur Signatur, reicht ihr bloßer Name.</p>
+                    <pre><code>Action&lt;string&gt; collect = list.Add;
+<span class="comment">// kürzer als: msg =&gt; list.Add(msg)</span></code></pre>
+                  </div>
+                </div>
+
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3>Übergeben vs. Aufrufen</h3>
+                    <p class="note">Mit oder ohne <code>()</code>?</p>
+                  </div>
+                  <div class="side yes">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Ohne
+                      <code>()</code> – übergeben
+                    </h4>
+                    <p>
+                      Die <strong>Methode selbst</strong> wird weitergereicht und erst beim
+                      Empfänger ausgeführt.
+                    </p>
+                    <pre><code>Run(Console.WriteLine);
+<span class="comment">// Methode wird als Argument übergeben</span></code></pre>
+                  </div>
+                  <div class="side no">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-cross" /></svg>Mit
+                      <code>()</code> – sofort aufrufen
+                    </h4>
+                    <p>
+                      Führt die Methode <strong>sofort</strong> aus und übergibt nur ihr Ergebnis
+                      (bei <code>void</code>: Compilerfehler).
+                    </p>
+                    <pre><code>Run(Console.WriteLine());
+<span class="comment">// Fehler: ruft sofort auf statt weiterzugeben</span></code></pre>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="rule">
+              <p>
+                <strong>Faustregel:</strong> Im Alltag reichen fast immer <code>Func</code> (mit
+                Rückgabe) und <code>Action</code> (ohne Rückgabe) – ein eigenes
+                <code>delegate</code> braucht man nur selten. Kurze Regel → Lambda, passende Methode
+                schon da → Method Group ohne <code>()</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: EVENTS -->
+        <div role="tabpanel" id="panel-events" aria-labelledby="tab-events" hidden="until-found">
+          <div class="tab-content">
+            <section class="compare-section" aria-labelledby="sec-events">
+              <h2 id="sec-events">Die 4 Bausteine des .NET-Event-Patterns</h2>
+              <div class="table-wrap">
+                <table class="panel events-table">
+                  <caption class="visually-hidden">
+                    Die vier Bausteine des .NET-Event-Patterns: EventArgs, EventHandler, Auslöser
+                    und Handler
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Baustein</th>
+                      <th scope="col">Rolle (Bild)</th>
+                      <th scope="col">Syntax</th>
+                      <th scope="col">Regel</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">EventArgs</code>
+                        <span class="note">Briefumschlag</span>
+                      </th>
+                      <td class="use">
+                        Trägt die Daten zum Ereignis (oder leer: <code>EventArgs.Empty</code>)
+                      </td>
+                      <td>
+                        <code>sealed class ...EventArgs : EventArgs</code>
+                        <span class="note">Properties nur <code>{ get; }</code></span>
+                      </td>
+                      <td>
+                        <span class="status yes"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Nur
+                          lesen</span
+                        >
+                        <span class="note">unveränderbar für alle</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">event EventHandler&lt;T&gt;?</code>
+                        <span class="note">Abo-Liste</span>
+                      </th>
+                      <td class="use">
+                        Hält alle angemeldeten Methoden (<code>≈ Action&lt;object?, T&gt;</code>)
+                      </td>
+                      <td>
+                        <code>public event EventHandler&lt;T&gt;? Changed;</code>
+                        <span class="note"><code>?</code>, da ohne Abos <code>null</code></span>
+                      </td>
+                      <td>
+                        <span class="tag">Geschützt</span>
+                        <span class="note">außen nur <code>+=</code> / <code>-=</code></span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">On&lt;Name&gt;(e)</code>
+                        <span class="note">Auslöse-Knopf</span>
+                      </th>
+                      <td class="use">Ruft alle Abonnenten im Publisher sicher auf</td>
+                      <td>
+                        <code>Changed?.Invoke(this, e);</code>
+                        <span class="note"
+                          >in <code>protected virtual void OnChanged(T e)</code></span
+                        >
+                      </td>
+                      <td>
+                        <span class="status warn"
+                          ><svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>Nur
+                          innen</span
+                        >
+                        <span class="note"><code>?.</code> verhindert Crash</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row">
+                        <code class="type-name">Handler</code>
+                        <span class="note">Subscriber-Reaktion</span>
+                      </th>
+                      <td class="use">Läuft automatisch, sobald das Event ausgelöst wird</td>
+                      <td>
+                        <code>void Handle(object? sender, T e)</code>
+                        <span class="note"><code>publisher.Changed += Handle;</code></span>
+                      </td>
+                      <td>
+                        <span class="tag heap">Entkoppelt</span>
+                        <span class="note">Publisher kennt ihn nicht</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="split" aria-label="Ablauf und wichtige Event-Regeln">
+              <div>
+                <h2>Ablauf: Wer ruft wann was auf?</h2>
+                <ol class="rows steps panel">
+                  <li>
+                    <div>
+                      <div class="term">Anmelden mit <code>+=</code></div>
+                      <p>
+                        Subscriber hängt seine Methode in die Abo-Liste ein.
+                        <strong>Noch wird nichts ausgeführt.</strong>
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <div>
+                      <div class="term">Etwas passiert im Publisher</div>
+                      <p>
+                        Eine normale Methode läuft, packt die Infos in ein
+                        <code>new ...EventArgs(...)</code> und ruft <code>On&lt;Name&gt;(e)</code>.
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <div>
+                      <div class="term">Auslösen per <code>?.Invoke(this, e)</code></div>
+                      <p>
+                        <code>?.</code> prüft, ob Abonnenten da sind; <code>this</code> wird als
+                        <code>sender</code> und <code>e</code> als Briefumschlag übergeben.
+                      </p>
+                    </div>
+                  </li>
+                  <li class="recommended">
+                    <div>
+                      <div class="term">Alle Handler laufen los</div>
+                      <p>
+                        Jede angemeldete Methode läuft der Reihe nach automatisch mit
+                        <code>(sender, e)</code> – egal wie viele es sind.
+                      </p>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+
+              <div>
+                <h2>Wichtige Regeln &amp; typische Fallen</h2>
+                <dl class="rows panel">
+                  <div>
+                    <dt class="term"><code>event</code> schützt die Abo-Liste</dt>
+                    <dd>
+                      Von außen sind <strong>nur <code>+=</code> und <code>-=</code></strong>
+                      erlaubt – niemand kann das Event fremdauslösen oder alle Abos mit
+                      <code>= null</code> löschen.
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term">Immer <code>?.Invoke</code> nutzen</dt>
+                    <dd>
+                      Ohne Subscriber ist das Event <code>null</code>. Ein direkter Aufruf ohne
+                      <code>?.</code> wirft eine <code>NullReferenceException</code>.
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term">
+                      <code>EventArgs</code> ist eine <code>class</code> (kein <code>record</code>)
+                    </dt>
+                    <dd>
+                      In C# kann ein <code>record</code> nicht von der Klasse
+                      <code>EventArgs</code> erben (Compilerfehler <code>CS8864</code>) – daher
+                      <code>sealed class</code> mit <code>{ get; }</code>-Properties.
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="term">Wofür steht <code>sender</code>?</dt>
+                    <dd>
+                      Hört derselbe Handler auf mehrere Publisher, verrät <code>sender</code> (per
+                      <code>sender is Typ x</code>), <em>wer</em> gerade gesendet hat.
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
+
+            <section aria-labelledby="sec-event-concepts">
+              <h2 id="sec-event-concepts">3 Unterschiede kurz erklärt</h2>
+              <div class="panel">
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3>Publisher vs. Subscriber</h3>
+                    <p class="note">Wer kennt wen?</p>
+                  </div>
+                  <div class="side stack">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-layers" /></svg>Publisher
+                      (Sender)
+                    </h4>
+                    <p>
+                      Hält die Abo-Liste (<code>event</code>) und löst aus –
+                      <strong>kennt keinen Subscriber</strong> (Loose Coupling).
+                    </p>
+                    <pre><code>public event EventHandler&lt;T&gt;? Updated;
+protected virtual void OnUpdated(T e)
+    =&gt; Updated?.Invoke(this, e);</code></pre>
+                  </div>
+                  <div class="side heap">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-link" /></svg>Subscriber
+                      (Empfänger)
+                    </h4>
+                    <p>
+                      Kennt den Publisher, meldet sich mit <code>+=</code> an und reagiert beim
+                      Auslösen.
+                    </p>
+                    <pre><code>source.Updated += HandleUpdate;
+void HandleUpdate(object? sender, T e)
+{ <span class="comment">/* Reaktion */</span> }</code></pre>
+                  </div>
+                </div>
+
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3>Anmelden vs. Auslösen</h3>
+                    <p class="note">Wann läuft der Code?</p>
+                  </div>
+                  <div class="side yes">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Anmelden
+                      (<code>+=</code>)
+                    </h4>
+                    <p>
+                      Trägt die Methode nur in die Liste ein – wie <code>addEventListener</code> im
+                      Browser.
+                    </p>
+                    <pre><code>source.Updated += logger.Log;
+<span class="comment">// merkt sich Log – läuft noch nicht</span></code></pre>
+                  </div>
+                  <div class="side warn">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>Auslösen
+                      (<code>?.Invoke</code>)
+                    </h4>
+                    <p>
+                      Erst wenn der Publisher auslöst, laufen alle gemerkten Methoden der Reihe nach
+                      los.
+                    </p>
+                    <pre><code>Updated?.Invoke(this, new UpdatedEventArgs(val));
+<span class="comment">// ruft alle Abonnenten nacheinander auf</span></code></pre>
+                  </div>
+                </div>
+
+                <div class="concept">
+                  <div class="concept-head">
+                    <h3>Abmelden mit <code>-=</code></h3>
+                    <p class="note">Richtig vs. Lambda-Falle</p>
+                  </div>
+                  <div class="side yes">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Dieselbe
+                      Methoden-Referenz
+                    </h4>
+                    <p>
+                      Method Group oder gespeicherte Variable – <code>-=</code> findet exakt
+                      denselben Eintrag und entfernt ihn.
+                    </p>
+                    <pre><code>source.Updated += logger.Log;
+source.Updated -= logger.Log; <span class="comment">// abgemeldet</span></code></pre>
+                  </div>
+                  <div class="side no">
+                    <h4>
+                      <svg class="icon" aria-hidden="true"><use href="#i-cross" /></svg>Neue
+                      Inline-Lambda
+                    </h4>
+                    <p>
+                      Zwei identisch geschriebene Lambdas sind verschiedene Objekte –
+                      <code>-=</code> lässt das Abo einfach weiterlaufen.
+                    </p>
+                    <pre><code>source.Updated += (s, e) =&gt; Console.WriteLine(e);
+source.Updated -= (s, e) =&gt; Console.WriteLine(e);
+<span class="comment">// wirkungslos (anderes Lambda-Objekt!)</span></code></pre>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="rule">
+              <p>
+                <strong>Faustregel:</strong> <code>Func</code> / <code>Action</code> als Parameter
+                nutzen, wenn der Aufrufer die Reaktion direkt mitgibt –
+                <code>event EventHandler&lt;T&gt;</code> nutzen, wenn beliebig viele unbekannte
+                Stellen später reagieren sollen. Immer per <code>?.Invoke(this, e)</code> auslösen.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const systemDark = matchMedia('(prefers-color-scheme: dark)');
+
+      document.getElementById('theme-toggle').addEventListener('click', () => {
+        const system = systemDark.matches ? 'dark' : 'light';
+        // Aus dem Meta-Tag lesen, nicht aus dem Storage: der kann gesperrt sein
+        const current = schemeMeta.content === 'light dark' ? system : schemeMeta.content;
+        const target = current === 'dark' ? 'light' : 'dark';
+        // Entspricht das Ziel dem System, wieder dem System folgen statt es festzuschreiben
+        const next = target === system ? null : target;
+        try {
+          if (next) localStorage.setItem(schemeKey, next);
+          else localStorage.removeItem(schemeKey);
+        } catch {
+          // Storage gesperrt: Theme gilt dann nur bis zum Neuladen
+        }
+        schemeMeta.content = next ?? 'light dark';
+      });
+
+      // Andere Tabs mit derselben Datei ziehen mit
+      addEventListener('storage', (event) => {
+        if (event.key === schemeKey) schemeMeta.content = savedScheme() ?? 'light dark';
+      });
+
+      // Accessible Tabs (Selection follows focus + beforematch für Strg+F)
+      const tabs = [...document.querySelectorAll('[role="tab"]')];
+      const panels = new Map(
+        tabs.map((tab) => [tab, document.querySelector(`[aria-labelledby="${tab.id}"]`)]),
+      );
+
+      function selectTab(selected, { moveFocus = false } = {}) {
+        for (const tab of tabs) {
+          const active = tab === selected;
+          tab.setAttribute('aria-selected', String(active));
+          tab.tabIndex = active ? 0 : -1;
+          tab.toggleAttribute('focusgroupstart', active);
+          const panel = panels.get(tab);
+          if (panel) panel.hidden = active ? false : 'until-found';
+        }
+        if (moveFocus) selected.focus();
+        selected.scrollIntoView({ block: 'nearest', inline: 'nearest', container: 'nearest' });
+      }
+
+      for (const tab of tabs) {
+        tab.addEventListener('click', () => selectTab(tab));
+        tab.addEventListener('focus', () => {
+          if (tab.getAttribute('aria-selected') !== 'true') selectTab(tab);
+        });
+        tab.addEventListener('keydown', (event) => {
+          const index = tabs.indexOf(tab);
+          let nextIndex = null;
+          if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+          else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+          else if (event.key === 'Home') nextIndex = 0;
+          else if (event.key === 'End') nextIndex = tabs.length - 1;
+          if (nextIndex !== null) {
+            event.preventDefault();
+            selectTab(tabs[nextIndex], { moveFocus: true });
+          }
+        });
+        const panel = panels.get(tab);
+        panel?.addEventListener('beforematch', () => selectTab(tab));
+      }
+
+      const hashTabs = {
+        '#datentypen': 'tab-types',
+        '#delegates': 'tab-delegates',
+        '#events': 'tab-events',
+      };
+      const initialTabId = hashTabs[location.hash];
+      if (initialTabId) {
+        selectTab(document.getElementById(initialTabId));
+      }
+    </script>
+  </body>
+</html>
